@@ -1,0 +1,20 @@
+{
+    "logdir": "./log//training",
+    "lr": 0.001,
+    "adjust_lr": 1,
+    "device": "cpu",
+    "Nep": 10000,
+    "Npde": 256,
+    "addBC": 1,
+    "standard": 1,
+    "path": "./log//training\\2024_11_27_13_18_34",
+    "Lambda": 1.0,
+    "data standard": 1,
+    "N models": 1,
+    "units": 32,
+    "length": 387.4999999999995,
+    "mean": -0.27595195174217224,
+    "std": 2.840336799621582,
+    "mean_data": 135.46266174316406,
+    "std_data": 139.2484588623047
+}

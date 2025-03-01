@@ -1,0 +1,60 @@
+{
+    "model_mode": "coil",
+    "mode": "train",
+    "eval_path": null,
+    "logdir": "./log//training",
+    "experiment": "training",
+    "device": "cpu",
+    "lr": 0.001,
+    "adjust_lr": 0,
+    "Nsamples": 16,
+    "Ntest": 1000,
+    "radius": 1,
+    "length": 0.3,
+    "units": 32,
+    "Nep": 10000,
+    "Npde": 256,
+    "addBC": 1,
+    "standard": 1,
+    "data_standard": 1,
+    "geo": "cube",
+    "inner_sample": 0,
+    "Btype": "reccirc",
+    "dx": 0.316,
+    "dy": 0.358,
+    "dz": 0.358,
+    "radius1": 0.207,
+    "radius2": 0.22,
+    "a": 0.378,
+    "b": 0.272,
+    "Iz": 1.0,
+    "Ix": 1.0,
+    "Iy": 1.0,
+    "Lambda": 0.1,
+    "N_models": 1,
+    "train_sampling": "uniform",
+    "random_sample": 0,
+    "noise_data": 0,
+    "noise_labels": 0,
+    "path": "./log//training\\2025_2_28_16_3_15",
+    "mean": [
+        2.6880557537078857,
+        2.516744613647461,
+        1.9339646100997925
+    ],
+    "std": [
+        1.3261359930038452,
+        2.017744302749634,
+        1.634649634361267
+    ],
+    "mean_data": [
+        -0.01157838013023138,
+        0.0022977900225669146,
+        0.003364012809470296
+    ],
+    "std_data": [
+        0.10698255151510239,
+        0.10912193357944489,
+        0.10938955098390579
+    ]
+}

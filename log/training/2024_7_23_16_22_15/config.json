@@ -1,0 +1,23 @@
+{
+    "logdir": "./log//training",
+    "lr": 0.001,
+    "adjust_lr": 0,
+    "device": "cpu",
+    "Nsamples": 16,
+    "Ntest": 1000,
+    "radius": 1,
+    "length": 1,
+    "units": 32,
+    "Nep": 100001,
+    "Npde": 256,
+    "addBC": 0,
+    "standard": 0,
+    "geo": "cube",
+    "Btype": "Helmholtz",
+    "dx": 0.1,
+    "dy": 0.1,
+    "dz": 0.1,
+    "path": "./log//training\\2024_7_23_16_22_15",
+    "mean": 0,
+    "std": 1
+}

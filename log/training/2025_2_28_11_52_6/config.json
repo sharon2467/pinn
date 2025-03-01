@@ -1,0 +1,60 @@
+{
+    "model_mode": "phi",
+    "mode": "train",
+    "eval_path": null,
+    "logdir": "./log//training",
+    "experiment": "training",
+    "device": "cpu",
+    "lr": 0.001,
+    "adjust_lr": 0,
+    "Nsamples": 16,
+    "Ntest": 1000,
+    "radius": 1,
+    "length": 0.3,
+    "units": 32,
+    "Nep": 10000,
+    "Npde": 256,
+    "addBC": 1,
+    "standard": 1,
+    "data_standard": 1,
+    "geo": "cube",
+    "inner_sample": 0,
+    "Btype": "reccirc",
+    "dx": 0.316,
+    "dy": 0.358,
+    "dz": 0.358,
+    "radius1": 0.207,
+    "radius2": 0.22,
+    "a": 0.378,
+    "b": 0.272,
+    "Iz": 1.0,
+    "Ix": 1.0,
+    "Iy": 1.0,
+    "Lambda": 1,
+    "N_models": 1,
+    "train_sampling": "uniform",
+    "random_sample": 0,
+    "noise_data": 0,
+    "noise_labels": 0,
+    "path": "./log//training\\2025_2_28_11_52_6",
+    "mean": [
+        2.687580108642578,
+        1.9456853866577148,
+        1.9265857934951782
+    ],
+    "std": [
+        1.7919771671295166,
+        2.5285871028900146,
+        2.4606640338897705
+    ],
+    "mean_data": [
+        0.014295022934675217,
+        0.0027593288104981184,
+        0.002713870257139206
+    ],
+    "std_data": [
+        0.10897377133369446,
+        0.11197967827320099,
+        0.11416521668434143
+    ]
+}
