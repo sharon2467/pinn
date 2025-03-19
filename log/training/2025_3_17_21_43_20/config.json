@@ -1,0 +1,60 @@
+{
+    "model_mode": "phi",
+    "mode": "import",
+    "eval_path": "expe_new",
+    "logdir": "./log//training",
+    "experiment": "training",
+    "device": "cpu",
+    "lr": 0.001,
+    "adjust_lr": 0,
+    "Nsamples": 16,
+    "Ntest": 1000,
+    "radius": 1,
+    "length": 160.0,
+    "units": 32,
+    "Nep": 100001,
+    "Npde": 256,
+    "addBC": 0,
+    "standard": 1,
+    "data_standard": 1,
+    "geo": "cube",
+    "inner_sample": 0,
+    "Btype": "Helmholtz",
+    "dx": 2,
+    "dy": 2,
+    "dz": 2,
+    "radius1": 1,
+    "radius2": 1,
+    "a": 9999,
+    "b": 9999,
+    "Iz": 9999,
+    "Ix": 9999,
+    "Iy": 9999,
+    "Lambda": 1,
+    "N_models": 1,
+    "train_sampling": "uniform",
+    "random_sample": 0,
+    "noise_data": 0,
+    "noise_labels": 0,
+    "path": "./log//training\\2025_3_17_21_43_20",
+    "mean": [
+        -0.1722281277179718,
+        0.03077024035155773,
+        -0.6309431195259094
+    ],
+    "std": [
+        3.844505786895752,
+        3.436030626296997,
+        4.579607963562012
+    ],
+    "mean_data": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "std_data": [
+        57.02659606933594,
+        57.02659606933594,
+        57.02659606933594
+    ]
+}

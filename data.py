@@ -257,10 +257,6 @@ class data_generation:
             labels = torch.tensor([self.B(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
         elif(Btype=='reccirc'):
             labels = torch.tensor(self.reccircB(x, y, z), requires_grad=True)
-        if(os.path.exists('./data/xyz.pt')==False):
-            torch.save(pos, f'./data/xyz.pt')
-        if(os.path.exists('./data/B.pt')==False):
-            torch.save(labels, f'./data/B.pt')
         return  pos, labels
     
     def train_data_slice(self, Btype='normal'):

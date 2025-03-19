@@ -29,7 +29,7 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     adjust = config['adjust_lr']
     addBC  = config['addBC']
     Lambda = config['Lambda']
-    model  = PINN(units,config['model_mode'])
+    model  = PINN(units,config['model_mode'],train_data,train_labels)
     model.to(device)
     #model.load_state_dict(torch.load('best_model.pt'))
     optimizer1 = optim.AdamW(model.parameters(), lr)
@@ -108,7 +108,7 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
                 best_model = model
                 best_ep = ep
                 exitflag=0
-            else:
+            elif(ep>Nep*0.5):
                 exitflag=exitflag+1
 
             if(test_loss<0.0000001 or exitflag>patience+5):
@@ -119,7 +119,7 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
             print(f'loss_B: {loss_u:.7f}, loss_div: {loss_f:.7f}, loss_cul: {loss_cross:.7f}, loss_BC_div: {loss_BC_div:.7f}, loss_BC_cul: {loss_BC_cul:.7f}')
             print(f'total loss: {loss:.7f}, test loss: {test_loss:.7f}')
             #print(torch.abs(test_pred-test_labels/test_labels))
-            print(f'max{torch.max(torch.abs(test_pred-test_labels))}')
+            print(f'max:{torch.max(torch.abs(test_pred-test_labels))}')
     print(f'best loss at ep: {best_ep}, best_loss: {mini_loss:.7f}')
     print(f'total time used: {time.time()-st:.2f}s')
     plt.plot(epoch, loss_f_l, label='loss div')

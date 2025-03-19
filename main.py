@@ -99,15 +99,17 @@ config.update(vars(args))
 if(args.mode=='import'):
     config['logdir'] = args.logdir + '/' + args.experiment
     path = mkdir(config['logdir'])
+    config['path'] = path
     N_models=config['N_models']
     temp=np.load(f"{args.eval_path}.npy")
     config['length']=np.max(temp[:,:3])-np.min(temp[:,:3])
     # 分割数据集，80%作为训练集，20%作为测试集
     #train_data, test_data, train_labels,test_labels = train_test_split(train_data_np, train_labels_np, test_size=0.1, random_state=42)  
-    train_data=torch.tensor(temp[1:,:3],dtype=torch.float32)
-    train_labels=torch.tensor(temp[1:,3:],dtype=torch.float32)
-    test_data=torch.unsqueeze(torch.tensor(temp[0,:3],dtype=torch.float32),0)
-    test_labels=torch.unsqueeze(torch.tensor(temp[0,3:],dtype=torch.float32),0)
+
+    train_data=torch.tensor(temp[int(np.round(temp.shape[0]*0.15)):,:3],dtype=torch.float32)
+    train_labels=torch.tensor(temp[int(np.round(temp.shape[0]*0.15)):,3:],dtype=torch.float32)
+    test_data=torch.tensor(temp[0:int(np.round(temp.shape[0]*0.2)),:3],dtype=torch.float32)
+    test_labels=torch.tensor(temp[0:int(np.round(temp.shape[0]*0.2)),3:],dtype=torch.float32)
 
     # 打印分割后的数据形状
     print(f"Training data shape: {train_data.shape}, Training labels shape: {train_labels.shape}")
