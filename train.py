@@ -3,7 +3,13 @@ import numpy as np
 from model import *
 import time
 import matplotlib.pyplot as plt
-
+def set_seed(seed):
+    """设置随机种子以确保可重复性"""
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 def lr_adjust(val_loss, optimizer):
     if(val_loss<0.1):
         for g in optimizer.param_groups:
@@ -31,6 +37,7 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     Lambda = config['Lambda']
     model  = PINN(units,config['model_mode'],train_data,train_labels)
     model.to(device)
+    set_seed(config['seed'])
     #model.load_state_dict(torch.load('best_model.pt'))
     optimizer1 = optim.AdamW(model.parameters(), lr)
     optimizer2=optim.LBFGS(model.parameters(),lr)

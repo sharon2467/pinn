@@ -32,7 +32,9 @@ def standardization(train_data,train_labels,test_data,test_labels,config):
         config['mean_data'] = 0
         config['std_data']  = 1
     return train_data,train_labels,test_data,test_labels,config
-parser = argparse.ArgumentParser(description='PINN field ediction')
+parser = argparse.ArgumentParser(description='PINN field prediction')
+parser.add_argument('--seed', type=int, default=42, metavar='--',
+                    help='random seed')
 parser.add_argument('--model_mode', type=str, metavar='--', choices=['phi','B','hard'],default='B',)
 parser.add_argument('--mode', type=str, metavar='--', choices=['train','import', 'eval'],default='train',)
 parser.add_argument('--eval_path',type=str,metavar='--',help='path to the model you want to evaluate')
@@ -84,8 +86,6 @@ parser.add_argument('--Lambda',type=float,default=1,metavar='--',help='super var
 parser.add_argument('--N_models',type=int,metavar='--',help='number of models to train',default=1)
 parser.add_argument('--train_sampling',type=str,metavar='--',default='uniform',choices=['linspace','uniform','normal'],help='train point sampling mode')
 parser.add_argument('--random_sample',type=int,metavar='--',default=0,choices=[0,1],help='random sample the train data or not')
-parser.add_argument('--noise_data',type=float,metavar='--',default=0,help='noise on train data')
-parser.add_argument('--noise_labels',type=float,metavar='--',default=0,help='noise on train labels')
 args = parser.parse_args()
 if((args.dx==9999) and (args.dy==9999) and (args.dz==9999)):
     args.dx = args.radius*2
@@ -106,10 +106,10 @@ if(args.mode=='import'):
     # 分割数据集，80%作为训练集，20%作为测试集
     #train_data, test_data, train_labels,test_labels = train_test_split(train_data_np, train_labels_np, test_size=0.1, random_state=42)  
 
-    train_data=torch.tensor(temp[int(np.round(temp.shape[0]*0.15)):,:3],dtype=torch.float32)
-    train_labels=torch.tensor(temp[int(np.round(temp.shape[0]*0.15)):,3:],dtype=torch.float32)
-    test_data=torch.tensor(temp[0:int(np.round(temp.shape[0]*0.2)),:3],dtype=torch.float32)
-    test_labels=torch.tensor(temp[0:int(np.round(temp.shape[0]*0.2)),3:],dtype=torch.float32)
+    train_data=torch.tensor(temp[:98,:3],dtype=torch.float32)
+    train_labels=torch.tensor(temp[:98,3:],dtype=torch.float32)
+    test_data=torch.tensor(temp[98:,:3],dtype=torch.float32)
+    test_labels=torch.tensor(temp[98:,3:],dtype=torch.float32)
 
     # 打印分割后的数据形状
     print(f"Training data shape: {train_data.shape}, Training labels shape: {train_labels.shape}")
