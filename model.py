@@ -1,15 +1,12 @@
 import torch
 from torch import nn
 from torch.autograd import grad
-from torch import optim
 import numpy as np
-
-def sine_activation(x):
-    return torch.tanh(x)
+import copy
 def gradients(u, x):
     return grad(u, x, grad_outputs=torch.ones_like(u), create_graph=True,  only_inputs=True, allow_unused=True)[0]
 class PINN(nn.Module):
-    def __init__(self, units,model_mode,train_data,train_labels,activation=sine_activation):
+    def __init__(self, units,model_mode,train_data,train_labels,activation=torch.sin,activation_grad=torch.cos):
         if(model_mode=='hard'):
             self.train_data=train_data
             self.train_labels=train_labels
@@ -26,69 +23,82 @@ class PINN(nn.Module):
         #self.hidden_layer8 = nn.Linear(units, 3)
         self.activation = activation
         self.model_mode=model_mode
+        self.activation_grad=activation_grad
 
-    def forward(self, inputs):
+    def forward(self, inputs,error_prediction=False):
                
+        if(self.model_mode=='B' and error_prediction==False):
+            input=inputs
+        if((self.model_mode=='phi' or self.model_mode=='hard') and error_prediction==False):
+            if(len(inputs.shape)==1):
+                inputs=inputs.view(1,-1)
+            input_x = inputs[:,0].view(-1,1).requires_grad_(True)
+            input_y = inputs[:,1].view(-1,1).requires_grad_(True)
+            input_z = inputs[:,2].view(-1,1).requires_grad_(True)
+            input=torch.cat((input_x,input_y,input_z),axis=1)
+        if(self.model_mode=='B' and error_prediction==True):
+            input=inputs[0]
+        if(self.model_mode=='phi' and error_prediction==True):
+            input_x=inputs[0][:,0].view(-1,1).requires_grad_(True)
+            input_y=inputs[0][:,1].view(-1,1).requires_grad_(True)
+            input_z=inputs[0][:,2].view(-1,1).requires_grad_(True)
+            input=torch.cat((input_x,input_y,input_z),axis=1)
+
+        h10 = self.hidden_layer1(input)
+        h1 = self.activation(h10)
+        h20 = self.hidden_layer2(h1)
+        h2 = self.activation(h20)
+        h30 = self.hidden_layer3(h2+h1)
+        h3 = self.activation(h30)
+        h40 = self.hidden_layer4(h3+h2+h1)
+        h4 = self.activation(h40)
+        h5 = self.hidden_layer5(h4+h3+h2+h1)
         #h5 = self.activation(h5)
         #h6 = self.hidden_layer6(h5)
         #h6 = self.activation(h6)
         #h7 = self.hidden_layer7(h6)
         #h7 = self.activation(h7)
         #h8 = self.hidden_layer8(h7)
-        if(self.model_mode=='B' ):
-            h1 = self.hidden_layer1(inputs)
-            h1 = self.activation(h1)
-            h2 = self.hidden_layer2(h1)
-            h2 = self.activation(h2)
-            h3 = self.hidden_layer3(h2+h1)
-            h3 = self.activation(h3)
-            h4 = self.hidden_layer4(h3+h2+h1)
-            h4 = self.activation(h4)
-            h5 = self.hidden_layer5(h4+h3+h2+h1) 
+
+        if(self.model_mode=='B' and error_prediction==False):
             return h5
-        elif(self.model_mode=='phi' or 'hard'):
-            if(len(inputs.shape)==1):
-                inputs=inputs.view(1,-1)
-            input_x = inputs[:,0].view(-1,1).requires_grad_(True)
-            input_y = inputs[:,1].view(-1,1).requires_grad_(True)
-            input_z = inputs[:,2].view(-1,1).requires_grad_(True)
-            h1=self.hidden_layer1(torch.cat((input_x, input_y, input_z), axis=1))
-            h1=self.activation(h1)  
-            h2=self.hidden_layer2(h1)
-            h2=self.activation(h2)
-            h3=self.hidden_layer3(h2+h1)
-            h3=self.activation(h3)
-            h4=self.hidden_layer4(h3+h2+h1)
-            h4=self.activation(h4)
-            h5=self.hidden_layer5(h4+h3+h2+h1)
-            if(self.model_mode=='hard'):
-                u=torch.prod(torch.sum((torch.cat((input_x,input_y,input_z),axis=1)-self.train_data.view(1,3,-1))**2,dim=2),dim=3)
-                v=None
+        if(self.model_mode=='hard' and error_prediction==False):
+            u=torch.prod(torch.sum((torch.cat((input_x,input_y,input_z),axis=1)-self.train_data.view(1,3,-1))**2,dim=2),dim=3)
+            v=None
+        if((self.model_mode=='phi' or self.model_mode=='hard') and error_prediction==False):
             B_x = gradients(h5, input_x)
             B_y = gradients(h5, input_y)
             B_z = gradients(h5, input_z)
             return torch.cat((B_x,B_y,B_z),axis=1)
 
-# class PINN1(nn.Module):
-#     def __init__(self,units):
-#         super(PINN1, self).__init__()
-#         self.pinn1=PINN(units,'Bz')
-#         self.pinn2=PINN(units,'coil')
-#         self.pinn3=PINN(units,'coil')
-#         self.model_mode='coil'
-#     def forward(self,inputs):
-#         if(len(inputs.shape)==1):
-#             inputs=inputs.view(1,-1)
-#         train_x = inputs[:,0].view(-1,1).requires_grad_(True)
-#         train_y = inputs[:,1].view(-1,1).requires_grad_(True)
-#         train_z = inputs[:,2].view(-1,1).requires_grad_(True)
-#         rxz=train_x**2+train_z**2
-#         ryz=train_y**2+train_z**2
-#         phi=self.pinn1(torch.cat((train_x,train_y,train_z),axis=1))+self.pinn2(torch.cat((rxz,train_y),axis=1))+self.pinn3(torch.cat((ryz,train_x),axis=1))
-#         B_x = gradients(phi, train_x)
-#         B_y = gradients(phi, train_y)
-#         B_z = gradients(phi, train_z)
-#         return torch.cat((B_x,B_y,B_z),axis=1)
+        elif((self.model_mode=='B' or self.model_mode=='phi') and error_prediction==True):
+            error=inputs[1]
+            temp_layer1=copy.deepcopy(self.hidden_layer1)
+            temp_layer1.bias.data.zero_()
+            h1_error = temp_layer1(error)
+            h1_error = self.activation_grad(h10)*h1_error
+            temp_layer2=copy.deepcopy(self.hidden_layer2)
+            temp_layer2.bias.data.zero_()
+            h2_error = temp_layer2(h1_error)
+            h2_error = self.activation_grad(h20)*h2_error
+            temp_layer3=copy.deepcopy(self.hidden_layer3)
+            temp_layer3.bias.data.zero_()
+            h3_error = temp_layer3(h2_error+h1_error)
+            h3_error = self.activation_grad(h30)*h3_error
+            temp_layer4=copy.deepcopy(self.hidden_layer4)
+            temp_layer4.bias.data.zero_()
+            h4_error = temp_layer4(h3_error+h2_error+h1_error)
+            h4_error = self.activation_grad(h40)*h4_error
+            temp_layer5=copy.deepcopy(self.hidden_layer5)
+            temp_layer5.bias.data.zero_()
+            h5_error = temp_layer5(h4_error+h3_error+h2_error+h1_error)
+            if(self.model_mode=='B'):
+                return h5_error
+            if(self.model_mode=='phi'):
+                B_x_error=gradients(h5_error, input_x)
+                B_y_error=gradients(h5_error, input_y)
+                B_z_error=gradients(h5_error, input_z)
+                return torch.cat((B_x_error,B_y_error,B_z_error),axis=1)
 
 class PINN_Loss(nn.Module):
     #初始化神经网络输入，定义输入参数
@@ -177,7 +187,10 @@ class MODELS():
         self.train_data = train_data
         self.train_labels = train_labels
     def eval(self, eval_data,eval_mode='mean'):
-        eval_data = (eval_data-self.config['mean_data'])/self.config['std_data']
+        if(eval_mode=='mean' or eval_mode=='nearest' or eval_mode=='adjust_nearest'):
+            eval_data = (eval_data-self.config['mean_data'])/self.config['std_data']
+        else:
+            eval_data[0] = (eval_data[0]-self.config['mean_data'])/self.config['std_data']  
         for i in range(self.N_models):
             self.models[i].to('cpu')
         if(eval_mode=='mean'):
@@ -213,6 +226,25 @@ class MODELS():
                 delta=delta/torch.sum(delta)
                 for i in range(self.N_models):
                     model_output[j,:]=model_output[j,:]+(self.models[i](eval_data[j,:])*self.config['std']+self.config['mean'])*delta[i]
+        if(eval_mode=='error_MonteCarlo'):
+            eval_data_base=eval_data[0]
+            eval_data_error=eval_data[1]
+            output_base=self.eval(eval_data_base,eval_mode='mean') 
+            output_error=torch.zeros(output_base.shape)
+            for i in range(10):
+                random_data=torch.rand(eval_data_error.shape)
+                eval_data=eval_data_base+eval_data_error*random_data
+                model_output=self.eval(eval_data,eval_mode='mean')
+                output_error_new=torch.abs(output_base-model_output)
+                bool_idx=output_error_new>output_error
+                output_error=output_error*~bool_idx+output_error_new*bool_idx
+            model_output=output_error*self.config['std']
+        if(eval_mode=='error'):
+            model_output = torch.zeros((eval_data[0].shape[0], 3))
+            for i in range(self.N_models):
+                self.models[i].eval()
+                model_output = model_output + self.models[i](eval_data,True)*self.config['std']
+            model_output = model_output/self.N_models
         return model_output
 
     def save(self, path):

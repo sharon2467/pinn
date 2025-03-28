@@ -78,7 +78,8 @@ def Eval(model, config, field,mode):
             temp_final = np.array([field.B(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
         elif(Btype=='reccirc'):
             temp_final = np.array([field.reccircB(x_test_np,y_test_np,z_test_np)])
-        model_output=model.eval(eval_data,'adjust_nearest')
+        model_output=model.eval(eval_data,'mean')
+           
         temp_final = temp_final.reshape(N_val**3, 3)
         drawdB(model_output,temp_final,path)
 
@@ -104,7 +105,7 @@ def Eval(model, config, field,mode):
                 plt.colorbar(CS)
                 plt.xlabel('x')
                 plt.ylabel('y')
-                plt.title(f'pred filed at z={np.round(-L+idx*L*2/N_val,2)}') 
+                plt.title(f'pred field at z={np.round(-L+idx*L*2/N_val,2)}') 
                 if(not j==4):
                     plt.gca().axes.get_xaxis().set_visible(False)   
                 figure.add_subplot(5,3,2+3*j)
@@ -151,7 +152,7 @@ def Eval(model, config, field,mode):
                 plt.colorbar(CS)
                 plt.xlabel('x')
                 plt.ylabel('z')
-                plt.title(f'pred filed at y={np.round(-L+idx*L*2/N_val,2)}')
+                plt.title(f'pred field at y={np.round(-L+idx*L*2/N_val,2)}')
                 if(not j==4):
                     plt.gca().axes.get_xaxis().set_visible(False)   
                 figure.add_subplot(5,3,j*3+2)
@@ -198,7 +199,7 @@ def Eval(model, config, field,mode):
                 plt.colorbar(CS)
                 plt.xlabel('y')
                 plt.ylabel('z')
-                plt.title(f'pred filed at x={np.round(-L+idx*L*2/N_val,decimals=2)}')
+                plt.title(f'pred field at x={np.round(-L+idx*L*2/N_val,decimals=2)}')
                 if(not j==4):
                     plt.gca().axes.get_xaxis().set_visible(False)   
                 figure.add_subplot(5,3,j*3+2)
@@ -235,6 +236,8 @@ def Eval(model, config, field,mode):
         if np.any(temp_final == 0):
             print("Warning: temp_final contains zero values.")
         drawdB(model_output,temp_final,path)
+        model_output_error=model.eval([data,torch.ones_like(data)*0.001],'error_MonteCarlo')
+        print(model_output_error)
 
 
 

@@ -3,6 +3,7 @@ import numpy as np
 from model import *
 import time
 import matplotlib.pyplot as plt
+from torch import optim
 def set_seed(seed):
     """设置随机种子以确保可重复性"""
     torch.manual_seed(seed)
