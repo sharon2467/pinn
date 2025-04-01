@@ -10,8 +10,14 @@ class PINN(nn.Module):
         if(model_mode=='hard'):
             self.train_data=train_data
             self.train_labels=train_labels
+            a=self.train_data.reshape(1,-1,3).repeat(self.train_data.shape[1],1,1)
+            b=self.train_data.reshape(-1,1,3)
+            c=torch.sum((a-b)**2,axis=2)
+            c[c==0]=1
+            c=torch.prod(c,axis=1)
+            self.c=c
         last=3 if model_mode=='B' else 1
-        first=2 if model_mode=='coil' else 3
+        first=3
         super(PINN, self).__init__()
         self.hidden_layer1 = nn.Linear(first, units)
         self.hidden_layer2 = nn.Linear(units, units)
@@ -63,12 +69,21 @@ class PINN(nn.Module):
         if(self.model_mode=='B' and error_prediction==False):
             return h5
         if(self.model_mode=='hard' and error_prediction==False):
-            u=torch.prod(torch.sum((torch.cat((input_x,input_y,input_z),axis=1)-self.train_data.view(1,3,-1))**2,dim=2),dim=3)
-            v=None
+            u=torch.prod(torch.sum((torch.cat((input_x,input_y,input_z),axis=1).view(-1,1,3)-self.train_data.view(1,-1,3))**2,dim=2),dim=1)
+            x=torch.cat((input_x,input_y,input_z),axis=1).view(1,-1,1,3).repeat(self.train_data.shape[0],1,1,1)
+            y=self.train_data.view(1,1,-1,3).repeat(self.train_data.shape[0],1,1,1)
+            z=torch.sum((x-y)**2,axis=3)
+            z[torch.linspace(0,self.train_data.shape[0]-1,self.train_data.shape[0]),:,torch.linspace(0,self.train_data.shape[0]-1,self.train_data.shape[0])]=1
+            z=torch.prod(z,axis=2)
+            a=torch.sum((x-self.train_data.view(self.train_data.shape[0],1,1,3))*self.train_labels.view(self.train_data.shape[0],1,1,3),axis=3)
+            v=torch.sum(a*z/self.c,axis=0)
         if((self.model_mode=='phi' or self.model_mode=='hard') and error_prediction==False):
+            if(self.model_mode=='hard'):
+                h5=h5*u+v
             B_x = gradients(h5, input_x)
             B_y = gradients(h5, input_y)
             B_z = gradients(h5, input_z)
+            
             return torch.cat((B_x,B_y,B_z),axis=1)
 
         elif((self.model_mode=='B' or self.model_mode=='phi') and error_prediction==True):
@@ -135,9 +150,9 @@ class PINN_Loss(nn.Module):
         else:
             x_f = np.random.default_rng().uniform(low = -self.L/10, high = self.L/10, size = ((self.N_f, 1)))
         z_f = np.random.default_rng().uniform(low = -self.L/2, high = self.L/2, size = ((self.N_f, 1)))
-        self.x_f = torch.tensor(x_f, dtype = torch.float32).to(device).requires_grad_(True)
-        self.y_f = torch.tensor(y_f, dtype = torch.float32).to(device).requires_grad_(True)
-        self.z_f = torch.tensor(z_f, dtype = torch.float32).to(device).requires_grad_(True)
+        self.x_f = torch.tensor(x_f, dtype = torch.float32,device=device,requires_grad=True)    
+        self.y_f = torch.tensor(y_f, dtype = torch.float32,device=device,requires_grad=True)
+        self.z_f = torch.tensor(z_f, dtype = torch.float32,device=device,requires_grad=True)
         temp_pred = model(torch.cat((self.x_f, self.y_f, self.z_f), axis=1))
         temp_ux = temp_pred[:,0].requires_grad_(True)
         temp_uy = temp_pred[:,1].requires_grad_(True)

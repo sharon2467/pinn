@@ -42,7 +42,7 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     #model.load_state_dict(torch.load('best_model.pt'))
     optimizer1 = optim.AdamW(model.parameters(), lr)
     optimizer2=optim.LBFGS(model.parameters(),lr)
-    scheduler=optim.lr_scheduler.ReduceLROnPlateau(optimizer1,patience=800)
+    scheduler=optim.lr_scheduler.ReduceLROnPlateau(optimizer1,patience=150)
     criterion = PINN_Loss(Npde, L, device, addBC,Lambda)
     
     loss_f_l = []
@@ -63,7 +63,7 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     test_labels=test_labels.to(device)     
     st = time.time()
     exitflag=0
-    patience=100
+    patience=30
     batch_on=False
     def closure():
         optimizer2.zero_grad()
@@ -86,9 +86,12 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
             pred = model(train_data_batch)      
             loss_f, loss_u, loss_cross, loss_BC_div, loss_BC_cul, loss = criterion(train_data_batch, pred, train_labels_batch, model)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer1.step()
+            
             if(adjust):
                 scheduler.step(loss)
+                print(scheduler._last_lr)
         else:
             optimizer2.step(closure=closure)
             pred = model(train_data_batch)
