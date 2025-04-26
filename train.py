@@ -36,13 +36,13 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     adjust = config['adjust_lr']
     addBC  = config['addBC']
     Lambda = config['Lambda']
-    model  = PINN(units,config['model_mode'],train_data,train_labels)
+    model  = PINN(units,config['model_mode'],train_data,train_labels,config['layers'])
     model.to(device)
     set_seed(config['seed'])
     #model.load_state_dict(torch.load('best_model.pt'))
     optimizer1 = optim.AdamW(model.parameters(), lr)
     optimizer2=optim.LBFGS(model.parameters(),lr)
-    scheduler=optim.lr_scheduler.ReduceLROnPlateau(optimizer1,patience=150)
+    scheduler=optim.lr_scheduler.ReduceLROnPlateau(optimizer1,patience=100)
     criterion = PINN_Loss(Npde, L, device, addBC,Lambda)
     
     loss_f_l = []
@@ -91,7 +91,6 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
             
             if(adjust):
                 scheduler.step(loss)
-                print(scheduler._last_lr)
         else:
             optimizer2.step(closure=closure)
             pred = model(train_data_batch)

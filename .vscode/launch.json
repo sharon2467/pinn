@@ -1,0 +1,38 @@
+{
+
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "console": "integratedTerminal",
+            "args": [
+        "--data_standard=1",
+        "--standard=1",        
+        "--model_mode=hard",
+        "--layers=1",
+        "--units=10",
+        "--addBC=1",
+        "train",
+        "--length=0.3",
+        "--dx=0.316",
+        "--dy=0.358",
+        "--dz=0.358",        
+        "--Nsamples=16",
+        "reccirc",
+        "--radius1=0.207",
+        "--radius2=0.22",
+        "--a=0.378",
+        "--b=0.272",
+        "--Ix=1",
+        "--Iy=1",
+        "--Iz=1",
+
+ 
+      ],
+        },
+    ]
+}

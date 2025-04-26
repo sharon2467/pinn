@@ -9,9 +9,9 @@ def getdB(Bpred, Breal):
     Bx_r = Breal[:,0]
     By_r = Breal[:,1]
     Bz_r = Breal[:,2]
-    Bx_r[Bx_r==0]=Bx[Bx_r==0]
-    By_r[By_r==0]=By[By_r==0]
-    Bz_r[Bz_r==0]=Bz[Bz_r==0]
+    Bx_r[abs(Bx_r)<1e-1]=Bx[abs(Bx_r)<1e-1]
+    By_r[abs(By_r)<1e-1]=By[abs(By_r)<1e-1]
+    Bz_r[abs(Bz_r)<1e-1]=Bz[abs(Bz_r)<1e-1]
     dBx = (Bx - Bx_r)/Bx_r
     dBy = (By - By_r)/By_r
     dBz = (Bz - Bz_r)/Bz_r
@@ -29,26 +29,26 @@ def getdB(Bpred, Breal):
     dBz=dBz[dBz!=0]
     dB = dB[dB != 0]
     return dBx, dBy, dBz, dB
-def drawdB(Bpred,Breal,path):
+def drawdB(Bpred,Breal,path,name='hist_result'):
     dBx, dBy, dBz, dB = getdB(Bpred, Breal)
     fig_stat = plt.figure(figsize=([16,16]))
     fig_stat.add_subplot(2,2,1)
     plt.hist(dBx, bins=10, label=f"Bx_pred - Bx_real: mean {dBx.mean():.5f} std {dBx.std():.5f}")
-    plt.legend()
+    plt.legend(fontsize=20)
     plt.yscale('log')
     fig_stat.add_subplot(2,2,2)
     plt.hist(dBy, bins=10, label=f"By_pred - By_real: mean {dBy.mean():.5f} std {dBy.std():.5f}")
-    plt.legend()
+    plt.legend(fontsize=20)
     plt.yscale('log')
     fig_stat.add_subplot(2,2,3)
     plt.hist(dBz, bins=10, label=f"Bz_pred - Bz_real: mean {dBz.mean():.5f} std {dBz.std():.5f}")
-    plt.legend()
+    plt.legend(fontsize=20)
     plt.yscale('log')
     fig_stat.add_subplot(2,2,4)
     plt.hist(dB, bins=10, label=f"B_pred - B_real: mean {dB.mean():.5f} std {dB.std():.5f}")
-    plt.legend()
+    plt.legend(fontsize=20)
     plt.yscale('log')
-    plt.savefig(f'{path}/hist_result.png')
+    plt.savefig(f'{path}/{name}.png')
     plt.show()
     plt.close()
 def Eval(model, config, field,mode):
@@ -236,9 +236,9 @@ def Eval(model, config, field,mode):
         if np.any(temp_final == 0):
             print("Warning: temp_final contains zero values.")
         drawdB(model_output,temp_final,path)
-        model_output_error=model.eval([data,torch.ones_like(data)*0.001],'error_MonteCarlo')
-        print(model_output_error)
-
+        exit()
+        model_output_error=model.eval([data,torch.ones_like(data)],'error_MonteCarlo')
+        drawdB(model_output_error+torch.tensor(temp_final),temp_final,path,name='error_result')
 
 
         

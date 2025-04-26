@@ -1,0 +1,60 @@
+{
+    "seed": 42,
+    "model_mode": "B",
+    "mode": "import",
+    "eval_path": "experiment2",
+    "logdir": "./log//training",
+    "layers": 2,
+    "experiment": "training",
+    "device": "cuda:0",
+    "lr": 0.001,
+    "adjust_lr": 1,
+    "Nsamples": 16,
+    "Ntest": 1000,
+    "radius": 1,
+    "length": 160.0,
+    "units": 3000,
+    "Nep": 50000,
+    "Npde": 500,
+    "addBC": 1,
+    "standard": 1,
+    "data_standard": 1,
+    "geo": "cube",
+    "inner_sample": 0,
+    "Btype": "Helmholtz",
+    "dx": 2,
+    "dy": 2,
+    "dz": 2,
+    "radius1": 1,
+    "radius2": 1,
+    "a": 9999,
+    "b": 9999,
+    "Iz": 9999,
+    "Ix": 9999,
+    "Iy": 9999,
+    "Lambda": 10.0,
+    "N_models": 1,
+    "train_sampling": "uniform",
+    "random_sample": 0,
+    "path": "./log//training\\2025_4_23_11_22_48",
+    "mean": [
+        -0.34485653042793274,
+        -0.1350768804550171,
+        -1.5129297971725464
+    ],
+    "std": [
+        4.546399116516113,
+        3.8635663986206055,
+        5.566495895385742
+    ],
+    "mean_data": [
+        0.0,
+        1.2244898080825806,
+        0.0
+    ],
+    "std_data": [
+        61.861167907714844,
+        58.13715362548828,
+        61.861167907714844
+    ]
+}
