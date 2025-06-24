@@ -125,7 +125,7 @@ if(args.mode=='import'):
     train_labels=torch.tensor(temp[:98,3:],dtype=torch.float32)
     test_data=torch.tensor(temp[98:,:3],dtype=torch.float32)
     test_labels=torch.tensor(temp[98:,3:],dtype=torch.float32)
-
+    #print(train_data,train_labels,test_data,test_labels)
     # 打印分割后的数据形状
     print(f"Training data shape: {train_data.shape}, Training labels shape: {train_labels.shape}")
     train_data1,train_labels1,test_data1,test_labels1,config=standardization(train_data,train_labels,test_data,test_labels,config)
@@ -134,10 +134,11 @@ if(args.mode=='import'):
     np.save(f"{path}/train_data.npy", train_data)
     np.save(f"{path}/train_labels.npy", train_labels)
     models=MODELS(config,train_data,train_labels)
-    # for i in range(N_models):
-    #      model = train( train_data1, train_labels1, test_data1, test_labels1, config,i )
-    #      models.models.append(model)
-    models.load('log/training/2025_4_22_17_5_34')
+    print(train_data1,train_labels1,test_data1,test_labels1)
+    for i in range(N_models):
+         model = train( train_data1, train_labels1, test_data1, test_labels1, config,i )
+         models.models.append(model)
+    #models.load('log/training/2025_4_29_0_47_49')
     Eval(models,config,(test_data,test_labels),args.mode)
 if(args.mode=='train'):
     

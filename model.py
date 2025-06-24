@@ -56,6 +56,8 @@ class PINN(nn.Module):
             input=torch.cat((input_x,input_y,input_z),axis=1)
         hlist1=[]
         hlist2=[]
+        hlist11,hlist22=[],[]
+        
         for i in range(len(self.layerlist)):            
             if(i==len(self.layerlist)-1):
                 output=self.layerlist[i](input) 
@@ -66,6 +68,18 @@ class PINN(nn.Module):
             for j in range(i+1):
                 b=b+hlist2[j] 
             input=b
+        if(error_prediction==True):
+            input1=inputs[0]+inputs[1]
+            for i in range(len(self.layerlist)):            
+                if(i==len(self.layerlist)-1):
+                    output1=self.layerlist[i](input1) 
+                    break
+                hlist11.append(self.layerlist[i](input1))
+                hlist22.append(self.activation(hlist11[i]))
+                b=0
+                for j in range(i+1):
+                    b=b+hlist22[j] 
+                input1=b        
         #h5 = self.activation(h5)
         #h6 = self.hidden_layer6(h5)
         #h6 = self.activation(h6)
@@ -101,15 +115,20 @@ class PINN(nn.Module):
             for i in range(len(self.layerlist)):                
 
                 temp_layer=copy.deepcopy(self.layerlist[i])
-                temp_layer.bias.data.zero_()                
+                temp_layer.bias.data.zero_()  
+                temp_layer.weight.data=temp_layer.weight.data**2             
                 if(i==len(self.layerlist)-1):
-                    erroroutput=temp_layer(input)
+                    erroroutput=torch.sqrt(temp_layer(error**2))
+                    print(erroroutput,output1-output)
                     break
-                errorlist.append(temp_layer(error))
+                errorlist.append(torch.sqrt(temp_layer(error**2)))
 
-                errorlist[i] = self.activation_grad(hlist1[i])*errorlist[i]
+                errorlist[i] = torch.abs(self.activation_grad(hlist1[i])*errorlist[i])
+                #print(errorlist[i],hlist22[i]-hlist2[i],i)
+                f=0
                 for j in range(i+1):
-                    error=error+errorlist[j]
+                    f=f+errorlist[j]
+                error=f
             if(self.model_mode=='B'):
                 return erroroutput
             if(self.model_mode=='phi'):
@@ -207,7 +226,7 @@ class MODELS():
     def eval(self, eval_data,eval_mode='mean'):
         if(eval_mode=='mean' or eval_mode=='nearest' or eval_mode=='adjust_nearest'):
             eval_data = (eval_data-self.config['mean_data'])/self.config['std_data']
-        else:
+        elif(eval_mode=='error'):
             eval_data[0] = (eval_data[0]-self.config['mean_data'])/self.config['std_data'] 
             eval_data[1] = eval_data[1]/self.config['std_data'] 
         for i in range(self.N_models):
@@ -264,6 +283,43 @@ class MODELS():
                 self.models[i].eval()
                 model_output = model_output + self.models[i](eval_data,True)*self.config['std']
             model_output = model_output/self.N_models
+        if(eval_mode=='error_field'):
+            eval_data_base=eval_data[0]
+            field_data_error=eval_data[1]
+            output_base=self.eval(eval_data_base,eval_mode='mean')
+            output_error=torch.zeros(output_base.shape)
+            if(~(torch.sum(field_data_error**2)==0)):
+                baseline=self.eval([eval_data_base,torch.zeros(field_data_error.shape)],eval_mode='error_field')
+            for i in range(5):
+                random_data=torch.rand(field_data_error.shape)
+                field_data=(self.train_labels+field_data_error*random_data-self.config['mean'])/self.config['std']
+                model1=copy.deepcopy(self.models[0])
+                optimizer = torch.optim.Adam(model1.parameters(), lr=0.000003) 
+                model1.train()
+                criterion = PINN_Loss(self.config['Npde'], self.config['length'], 'cpu', self.config['addBC'], self.config['Lambda'])
+                bestloss=1000000000
+                for j in range(200):
+                    optimizer.zero_grad()
+                    pred = model1((self.train_data-self.config['mean_data'])/self.config['std_data'])
+                    loss_f, loss_u, loss_cross, loss_BC_div, loss_BC_cul, loss = criterion((self.train_data-self.config['mean_data'])/self.config['std_data'], pred, field_data, model1)
+                    loss.backward()
+                    optimizer.step()
+                    if(loss<bestloss):
+                        bestloss=loss
+                        bestmodel=copy.deepcopy(model1)
+                    print(j,loss_u,torch.mean(random_data**2/self.config['std_data']**2))
+                model1=copy.deepcopy(bestmodel)
+                model1.eval()
+                model_output=model1((eval_data_base-self.config['mean_data'])/self.config['std_data'])*self.config['std']+self.config['mean']   
+                output_error_new=torch.abs(output_base-model_output)
+                bool_idx=output_error_new>output_error
+                output_error=output_error*~bool_idx+output_error_new*bool_idx
+                print(i)
+                print(output_error)
+            if(~(torch.sum(field_data_error**2)==0)):
+                model_output=output_error-baseline
+                model_output[model_output<0]=0
+
         return model_output
 
     def save(self, path):

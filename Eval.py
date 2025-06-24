@@ -9,25 +9,25 @@ def getdB(Bpred, Breal):
     Bx_r = Breal[:,0]
     By_r = Breal[:,1]
     Bz_r = Breal[:,2]
-    Bx_r[abs(Bx_r)<1e-1]=Bx[abs(Bx_r)<1e-1]
-    By_r[abs(By_r)<1e-1]=By[abs(By_r)<1e-1]
-    Bz_r[abs(Bz_r)<1e-1]=Bz[abs(Bz_r)<1e-1]
+    # Bx_r[abs(Bx_r)<1e-1]=Bx[abs(Bx_r)<1e-1]
+    # By_r[abs(By_r)<1e-1]=By[abs(By_r)<1e-1]
+    # Bz_r[abs(Bz_r)<1e-1]=Bz[abs(Bz_r)<1e-1]
     dBx = (Bx - Bx_r)/Bx_r
     dBy = (By - By_r)/By_r
     dBz = (Bz - Bz_r)/Bz_r
     dB = ( np.sqrt(Bx**2+By**2+Bz**2) - np.sqrt(Bx_r**2+By_r**2+Bz_r**2) ) / np.sqrt(Bx_r**2+By_r**2+Bz_r**2)
-    dBx[abs(dBx-np.mean(dBx))/np.std(dBx)>3]=0
-    dBy[abs(dBy-np.mean(dBy))/np.std(dBy)>3]=0
-    dBz[abs(dBz-np.mean(dBz))/np.std(dBz)>3]=0
-    dB[abs(dB-np.mean(dB))/np.std(dB)>3]=0
-    dBx[abs(Bx_r)<np.mean(abs(Bx_r))/3]=0
-    dBy[abs(By_r)<np.mean(abs(By_r))/3]=0
-    dBz[abs(Bz_r)<np.mean(abs(Bz_r))/3]=0
-    dB[abs(np.sqrt(Bx_r**2+By_r**2+Bz_r**2))<np.mean(abs(np.sqrt(Bx_r**2+By_r**2+Bz_r**2)))/3]=0
-    dBx=dBx[dBx!=0]
-    dBy=dBy[dBy!=0]
-    dBz=dBz[dBz!=0]
-    dB = dB[dB != 0]
+    # dBx[abs(dBx-np.mean(dBx))/np.std(dBx)>3]=0
+    # dBy[abs(dBy-np.mean(dBy))/np.std(dBy)>3]=0
+    # dBz[abs(dBz-np.mean(dBz))/np.std(dBz)>3]=0
+    # dB[abs(dB-np.mean(dB))/np.std(dB)>3]=0
+    # dBx[abs(Bx_r)<np.mean(abs(Bx_r))/3]=0
+    # dBy[abs(By_r)<np.mean(abs(By_r))/3]=0
+    # dBz[abs(Bz_r)<np.mean(abs(Bz_r))/3]=0
+    # dB[abs(np.sqrt(Bx_r**2+By_r**2+Bz_r**2))<np.mean(abs(np.sqrt(Bx_r**2+By_r**2+Bz_r**2)))/3]=0
+    # dBx=dBx[dBx!=0]
+    # dBy=dBy[dBy!=0]
+    # dBz=dBz[dBz!=0]
+    # dB = dB[dB != 0]
     return dBx, dBy, dBz, dB
 def drawdB(Bpred,Breal,path,name='hist_result'):
     dBx, dBy, dBz, dB = getdB(Bpred, Breal)
@@ -236,9 +236,12 @@ def Eval(model, config, field,mode):
         if np.any(temp_final == 0):
             print("Warning: temp_final contains zero values.")
         drawdB(model_output,temp_final,path)
-        exit()
-        model_output_error=model.eval([data,torch.ones_like(data)],'error_MonteCarlo')
-        drawdB(model_output_error+torch.tensor(temp_final),temp_final,path,name='error_result')
+        model_output_error=model.eval([data,data*0.01],'error') 
+        model_output_error_MonteCarlo=model.eval([data,data*0.01],'error_MonteCarlo')
+        model_output_error_field=model.eval([data,model.train_labels*0.01],'error_field')
+        drawdB(model_output_error+torch.abs(torch.tensor(temp_final)),np.abs(temp_final),path,name='error_result')
+        drawdB(model_output_error_MonteCarlo+torch.abs(torch.tensor(temp_final)),np.abs(temp_final),path,name='error_result_MonteCarlo')
+        drawdB(model_output_error_field+torch.abs(torch.tensor(temp_final)),np.abs(temp_final),path,name='error_result_field')
 
 
         

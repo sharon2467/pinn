@@ -1,0 +1,42 @@
+{
+    "mode": "import",
+    "seed": 42,
+    "model_mode": "B",
+    "logdir": "./log//training",
+    "layers": 1,
+    "experiment": "training",
+    "device": "cpu",
+    "lr": 0.001,
+    "adjust_lr": 0,
+    "units": 10,
+    "Nep": 100001,
+    "Npde": 256,
+    "addBC": 1,
+    "standard": 1,
+    "Lambda": 1,
+    "N_models": 1,
+    "data_standard": 1,
+    "eval_path": "experiment2",
+    "path": "./log//training\\2025_4_29_10_5_24",
+    "length": 160.0,
+    "mean": [
+        -0.1951175183057785,
+        -0.12738756835460663,
+        -1.3179210424423218
+    ],
+    "std": [
+        4.598727226257324,
+        3.947016477584839,
+        5.657559871673584
+    ],
+    "mean_data": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "std_data": [
+        61.861167907714844,
+        61.861167907714844,
+        61.861167907714844
+    ]
+}

@@ -1,0 +1,59 @@
+{
+    "mode": "train",
+    "seed": 42,
+    "model_mode": "B",
+    "logdir": "./log//training",
+    "layers": 2,
+    "experiment": "training",
+    "device": "cuda:0",
+    "lr": 0.001,
+    "adjust_lr": 1,
+    "units": 1000,
+    "Nep": 5000,
+    "Npde": 500,
+    "addBC": 1,
+    "standard": 1,
+    "Lambda": 1.0,
+    "N_models": 1,
+    "data_standard": 1,
+    "Btype": "reccirc",
+    "train_sampling": "linspace",
+    "random_sample": 0,
+    "length": 0.16,
+    "Nsamples": 16,
+    "Ntest": 1000,
+    "geo": "cube",
+    "radius": 1,
+    "inner_sample": 0,
+    "dx": 0.316,
+    "dy": 0.358,
+    "dz": 0.358,
+    "radius1": 0.207,
+    "radius2": 0.22,
+    "a": 0.378,
+    "b": 0.272,
+    "Iz": 1.0,
+    "Ix": 1.0,
+    "Iy": 1.0,
+    "path": "./log//training\\2025_4_27_16_1_0",
+    "mean": [
+        2.337023973464966,
+        1.8488928079605103,
+        1.8141592741012573
+    ],
+    "std": [
+        0.17092543840408325,
+        0.2877224385738373,
+        0.2516742944717407
+    ],
+    "mean_data": [
+        -3.1044086745701804e-10,
+        -7.761021686425451e-11,
+        4.656612873077393e-10
+    ],
+    "std_data": [
+        0.06032087281346321,
+        0.06071000173687935,
+        0.06032087281346321
+    ]
+}
