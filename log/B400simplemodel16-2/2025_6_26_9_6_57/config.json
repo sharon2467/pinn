@@ -1,0 +1,42 @@
+{
+    "mode": "import",
+    "seed": 42,
+    "model_mode": "B",
+    "logdir": "./log//B400simplemodel",
+    "layers": 2,
+    "experiment": "B400simplemodel",
+    "device": "cuda:0",
+    "lr": 0.001,
+    "adjust_lr": 1,
+    "units": 16,
+    "Nep": 30000,
+    "Npde": 500,
+    "addBC": 1,
+    "standard": 1,
+    "Lambda": 1.0,
+    "N_models": 1,
+    "data_standard": 1,
+    "eval_path": "experiment400",
+    "path": "./log//B400simplemodel\\2025_6_26_9_6_57",
+    "length": 160.0,
+    "mean": [
+        222.14480590820312,
+        -199.0192108154297,
+        268.48748779296875
+    ],
+    "std": [
+        41.69363784790039,
+        36.82674026489258,
+        27.463964462280273
+    ],
+    "mean_data": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "std_data": [
+        61.861167907714844,
+        61.861167907714844,
+        61.861167907714844
+    ]
+}

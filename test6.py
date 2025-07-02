@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-a=np.load('experiment2.npy')
+a=np.load('experiment400.npy')
 fig=plt.figure(figsize=(10, 5))
 ax=fig.add_subplot(111,projection='3d') 
 ax.scatter(a[:,3],a[:,4],a[:,5])
@@ -28,9 +28,9 @@ Bz1=Bz[1:4,1:4,1:4].flatten()
 # plt.show()
 b=np.concatenate((x1[:,np.newaxis],y1[:,np.newaxis],z1[:,np.newaxis],Bx1[:,np.newaxis],By1[:,np.newaxis],Bz1[:,np.newaxis]),axis=1)
 b1=b.reshape(-1,1,6)
-a=a[~((a==b1).any(0).all(1)),:]
-ax1.scatter(a[:,0],a[:,1],a[:,2])
-ax1.quiver(a[:,0],a[:,1],a[:,2],a[:,3],a[:,4],a[:,5],length=10,normalize=True)
+# a=a[~((a==b1).any(0).all(1)),:]
+ax1.scatter(a[:98,0],a[:98,1],a[:98,2])
+ax1.quiver(a[:98,0],a[:98,1],a[:98,2],a[:98,3],a[:98,4],a[:98,5],length=10,normalize=True)
 plt.show()
 #np.save('experiment2.npy',np.concatenate((a,b),axis=0))
 # Calculate the divergence of the vector field

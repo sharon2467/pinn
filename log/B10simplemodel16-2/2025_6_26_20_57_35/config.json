@@ -1,0 +1,42 @@
+{
+    "mode": "import",
+    "seed": 42,
+    "model_mode": "B",
+    "logdir": "./log//B10simplemodel16-2",
+    "layers": 2,
+    "experiment": "B10simplemodel16-2",
+    "device": "cuda:0",
+    "lr": 0.001,
+    "adjust_lr": 1,
+    "units": 16,
+    "Nep": 30000,
+    "Npde": 500,
+    "addBC": 1,
+    "standard": 1,
+    "Lambda": 1.0,
+    "N_models": 1,
+    "data_standard": 1,
+    "eval_path": "experiment10",
+    "path": "./log//B10simplemodel16-2\\2025_6_26_20_57_35",
+    "length": 160.0,
+    "mean": [
+        5.559385776519775,
+        -5.967483043670654,
+        4.626713275909424
+    ],
+    "std": [
+        4.326933860778809,
+        3.5797436237335205,
+        4.958434581756592
+    ],
+    "mean_data": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "std_data": [
+        61.861167907714844,
+        61.861167907714844,
+        61.861167907714844
+    ]
+}

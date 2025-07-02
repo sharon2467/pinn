@@ -1,0 +1,42 @@
+{
+    "mode": "import",
+    "seed": 42,
+    "model_mode": "B",
+    "logdir": "./log//B0mediummodel64-2",
+    "layers": 2,
+    "experiment": "B0mediummodel64-2",
+    "device": "cuda:0",
+    "lr": 0.001,
+    "adjust_lr": 1,
+    "units": 64,
+    "Nep": 30000,
+    "Npde": 500,
+    "addBC": 1,
+    "standard": 1,
+    "Lambda": 1.0,
+    "N_models": 1,
+    "data_standard": 1,
+    "eval_path": "experiment0",
+    "path": "./log//B0mediummodel64-2\\2025_6_28_18_2_58",
+    "length": 160.0,
+    "mean": [
+        -0.14100132882595062,
+        -0.158564031124115,
+        -1.3035796880722046
+    ],
+    "std": [
+        4.553289413452148,
+        3.8966965675354004,
+        5.613464832305908
+    ],
+    "mean_data": [
+        0.0,
+        0.0,
+        0.0
+    ],
+    "std_data": [
+        61.861167907714844,
+        61.861167907714844,
+        61.861167907714844
+    ]
+}

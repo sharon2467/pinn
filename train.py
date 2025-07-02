@@ -103,7 +103,9 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
             loss_BC_div_l.append(loss_BC_div.item())
             loss_BC_cul_l.append(loss_BC_cul.item())
             loss_l.append(loss.item())
+            torch.cuda.synchronize()     
             model.eval()
+           
             test_pred = model(test_data)
 
             test_loss = torch.mean(torch.square(test_pred-test_labels))

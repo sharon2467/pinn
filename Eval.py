@@ -3,9 +3,9 @@ from data import *
 from model import *
 import matplotlib.pyplot as plt
 def getdB(Bpred, Breal):
-    Bx = Bpred[:,0].detach().numpy()
-    By = Bpred[:,1].detach().numpy()
-    Bz = Bpred[:,2].detach().numpy()
+    Bx = Bpred[:,0]
+    By = Bpred[:,1]
+    Bz = Bpred[:,2]
     Bx_r = Breal[:,0]
     By_r = Breal[:,1]
     Bz_r = Breal[:,2]
@@ -52,7 +52,7 @@ def drawdB(Bpred,Breal,path,name='hist_result'):
     plt.show()
     plt.close()
 def Eval(model, config, field,mode):
-    if(mode=='train' or mode=='eval'):
+    if(mode=='train' or mode=='simulation'):
         path  = config['path']
         mode  = config['geo']
         Btype = config['Btype']
@@ -73,26 +73,26 @@ def Eval(model, config, field,mode):
         z_test = torch.tensor(z_test_np, dtype=torch.float32)
         eval_data = torch.cat([x_test, y_test, z_test], axis = 1)
         if(Btype=='Helmholtz'):
-            temp_final = np.array([field.HelmholtzB(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
+            simulation = np.array([field.HelmholtzB(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
         elif(Btype=='normal'):
-            temp_final = np.array([field.B(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
+            simulation = np.array([field.B(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
         elif(Btype=='reccirc'):
-            temp_final = np.array([field.reccircB(x_test_np,y_test_np,z_test_np)])
+            simulation = np.array([field.reccircB(x_test_np,y_test_np,z_test_np)])
         model_output=model.eval(eval_data,'mean')
            
-        temp_final = temp_final.reshape(N_val**3, 3)
-        drawdB(model_output,temp_final,path)
+        simulation = simulation.reshape(N_val**3, 3)
+        drawdB(model_output,simulation,path)
 
 
         model_output = model_output.reshape(N_val, N_val, N_val, 3)
-        temp_final = temp_final.reshape(N_val, N_val, N_val, 3)
+        simulation = simulation.reshape(N_val, N_val, N_val, 3)
         ax = ['Bx', 'By', 'Bz']
         idxlist=np.linspace(0,N_val-1,5,dtype=int)
         #在不同的z方向上看xy平面的结果
         for i in range(3):
             figure = plt.figure(figsize=(20,30))
             pred = model_output[:,:,:,i].detach().numpy() 
-            real = temp_final[:,:,:,i]
+            real = simulation[:,:,:,i]
             for j in range(5):
                 idx=idxlist[j]
                 pred_slice = pred[:,:,idx]                       
@@ -139,7 +139,7 @@ def Eval(model, config, field,mode):
         for i in range(3):
             figure = plt.figure(figsize=(20,30))
             pred = model_output[:,:,:,i].detach().numpy()
-            real = temp_final[:,:,:,i]
+            real = simulation[:,:,:,i]
             for j in range(5):
                 idx=idxlist[j]
                 pred_slice = pred[idx,:,:]                       
@@ -186,7 +186,7 @@ def Eval(model, config, field,mode):
         for i in range(3):
             figure = plt.figure(figsize=(20,30))
             pred = model_output[:,:,:,i].detach().numpy()
-            real = temp_final[:,:,:,i]
+            real = simulation[:,:,:,i]
             for j in range(5):
                 idx=idxlist[j]
                 pred_slice = pred[:,idx,:]
@@ -228,20 +228,21 @@ def Eval(model, config, field,mode):
             plt.savefig(f'{path}/slice_result_x_{ax[i]}.png')                                        
             plt.show()
             plt.close()
-    if(mode=='import'):
+    if(mode=='import' or mode=='experimental'):
         path  = config['path']
-        data=field[0]
-        temp_final=field[1].detach().numpy()
-        model_output=model.eval(data,'adjust_nearest')
-        if np.any(temp_final == 0):
-            print("Warning: temp_final contains zero values.")
-        drawdB(model_output,temp_final,path)
-        model_output_error=model.eval([data,data*0.01],'error') 
-        model_output_error_MonteCarlo=model.eval([data,data*0.01],'error_MonteCarlo')
-        model_output_error_field=model.eval([data,model.train_labels*0.01],'error_field')
-        drawdB(model_output_error+torch.abs(torch.tensor(temp_final)),np.abs(temp_final),path,name='error_result')
-        drawdB(model_output_error_MonteCarlo+torch.abs(torch.tensor(temp_final)),np.abs(temp_final),path,name='error_result_MonteCarlo')
-        drawdB(model_output_error_field+torch.abs(torch.tensor(temp_final)),np.abs(temp_final),path,name='error_result_field')
+        data = field[0]
+        experiment = field[1].detach().numpy()
+        model_output=model.eval(data,'adjust_nearest').detach().numpy()
+        if np.any(experiment == 0):
+            print("Warning: experiment contains zero values.")
+        drawdB(model_output,experiment,path)
+        drawdB(np.abs(model_output-experiment)+np.abs(experiment),np.abs(experiment),path,name='hist_result_abs')
+        model_output_error=model.eval([data,data*0.01],'error').detach().numpy() 
+        model_output_error_MonteCarlo=model.eval([data,data*0.01],'error_MonteCarlo').detach().numpy()
+        model_output_error_field=model.eval([data,model.train_labels*0.01],'error_field').detach().numpy()
+        drawdB(model_output_error+np.abs(experiment),np.abs(experiment),path,name='error_result')
+        drawdB(model_output_error_MonteCarlo+np.abs(experiment),np.abs(experiment),path,name='error_result_MonteCarlo')
+        drawdB(model_output_error_field+np.abs(experiment),np.abs(experiment),path,name='error_result_field')
 
 
         

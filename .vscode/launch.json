@@ -10,13 +10,14 @@
             "program": "main.py",
             "console": "integratedTerminal",
             "args": [
+        "--experiment=B400",
         "--data_standard=1",
         "--standard=1",        
         "--model_mode=B",
         "--layers=2",
         "--units=1000",
         "import",
-        "--eval_path=experiment2"
+        "--eval_path=experiment400"
 
  
       ],

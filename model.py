@@ -10,8 +10,6 @@ class PINN(nn.Module):
         self.train_data=train_data
         self.train_labels=train_labels
         if(model_mode=='hard'):
-            
-            
             a=self.train_data.reshape(1,-1,3).repeat(self.train_data.shape[0],1,1)
             b=self.train_data.reshape(-1,1,3)
             c=torch.sum((a-b)**2,axis=2)
@@ -224,6 +222,8 @@ class MODELS():
         self.train_data = train_data
         self.train_labels = train_labels
     def eval(self, eval_data,eval_mode='mean'):
+        for i in range(self.N_models):
+            self.models[i].eval()
         if(eval_mode=='mean' or eval_mode=='nearest' or eval_mode=='adjust_nearest'):
             eval_data = (eval_data-self.config['mean_data'])/self.config['std_data']
         elif(eval_mode=='error'):
@@ -274,9 +274,8 @@ class MODELS():
                 eval_data=eval_data_base+eval_data_error*random_data
                 model_output=self.eval(eval_data,eval_mode='mean')
                 output_error_new=torch.abs(output_base-model_output)
-                bool_idx=output_error_new>output_error
-                output_error=output_error*~bool_idx+output_error_new*bool_idx
-            model_output=output_error
+                output_error=output_error+output_error_new**2
+            model_output=(output_error/100)**0.5
         if(eval_mode=='error'):
             model_output = torch.zeros((eval_data[0].shape[0], 3))
             for i in range(self.N_models):
@@ -289,12 +288,13 @@ class MODELS():
             output_base=self.eval(eval_data_base,eval_mode='mean')
             output_error=torch.zeros(output_base.shape)
             if(~(torch.sum(field_data_error**2)==0)):
+                print('start evaluate baseline')
                 baseline=self.eval([eval_data_base,torch.zeros(field_data_error.shape)],eval_mode='error_field')
-            for i in range(5):
+            for i in range(5*self.N_models):
                 random_data=torch.rand(field_data_error.shape)
                 field_data=(self.train_labels+field_data_error*random_data-self.config['mean'])/self.config['std']
-                model1=copy.deepcopy(self.models[0])
-                optimizer = torch.optim.Adam(model1.parameters(), lr=0.000003) 
+                model1=copy.deepcopy(self.models[i//5])
+                optimizer = torch.optim.Adam(model1.parameters(), lr=0.0003) 
                 model1.train()
                 criterion = PINN_Loss(self.config['Npde'], self.config['length'], 'cpu', self.config['addBC'], self.config['Lambda'])
                 bestloss=1000000000
@@ -307,19 +307,20 @@ class MODELS():
                     if(loss<bestloss):
                         bestloss=loss
                         bestmodel=copy.deepcopy(model1)
-                    print(j,loss_u,torch.mean(random_data**2/self.config['std_data']**2))
+                    print(j,loss_u)
                 model1=copy.deepcopy(bestmodel)
                 model1.eval()
                 model_output=model1((eval_data_base-self.config['mean_data'])/self.config['std_data'])*self.config['std']+self.config['mean']   
                 output_error_new=torch.abs(output_base-model_output)
-                bool_idx=output_error_new>output_error
-                output_error=output_error*~bool_idx+output_error_new*bool_idx
+                output_error=output_error+output_error_new**2
                 print(i)
-                print(output_error)
+            output_error=(output_error/5)**0.5
+            print(output_error)
             if(~(torch.sum(field_data_error**2)==0)):
-                model_output=output_error-baseline
-                model_output[model_output<0]=0
-
+                output_error=output_error**2-baseline**2
+                output_error[output_error<0]=0
+                output_error=output_error**0.5
+            model_output=output_error
         return model_output
 
     def save(self, path):
