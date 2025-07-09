@@ -1,3 +1,6 @@
+#这个程序用于从带时间戳的磁场数据和坐标数据中匹配每个坐标上的磁场并输出结果
+#即【时间，坐标】+【时间，磁场】=【坐标，磁场】
+#不过效果不好，建议寻找李学长索要他的程序
 import pandas as pd
 from sklearn.cluster import KMeans
 import numpy as np

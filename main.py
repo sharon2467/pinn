@@ -35,6 +35,7 @@ def standardization(train_data,train_labels,test_data,test_labels,config):
     return train_data,train_labels,test_data,test_labels,config
 
 # 这部分用于定义输入的参数组，当发起一次程序运行时，格式应当为：python main.py --vars=value train/import/eval --vars=value
+# train对应使用模拟数据训练，import对应使用实验数据训练，eval对应使用已经训练好的模型进行评估。注意train和import训练好后会自动评估一次
 parser = argparse.ArgumentParser(description='PINN field prediction',exit_on_error=True,allow_abbrev=False)
 subparser=parser.add_subparsers(dest='mode', help='three modes ')
 subparser_train=subparser.add_parser('train', help='train the model from simulation data')
@@ -221,7 +222,7 @@ if(args.mode=='eval'):
         train_labels = torch.tensor(np.load(f"{args.model_path}/train_labels.npy"))
         models=MODELS(config,train_data,train_labels)
         models.load(args.model_path)
-        Eval(models,config,field,args.mode)
+        Eval(models,config,field,args.data_type)
     # 这是利用已经训练好的实验数据模型进行评估的模式
     if(args.data_type=='experimental'):
         config['logdir'] = args.logdir + '/' + args.experiment

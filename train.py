@@ -4,13 +4,14 @@ from model import *
 import time
 import matplotlib.pyplot as plt
 from torch import optim
+# 设定随机种子以确保可重复性
 def set_seed(seed):
-    """设置随机种子以确保可重复性"""
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+# 学习率调整函数，根据loss大小调整学习率
 def lr_adjust(val_loss, optimizer):
     if(val_loss<0.1):
         for g in optimizer.param_groups:
@@ -26,6 +27,7 @@ def lr_adjust(val_loss, optimizer):
                 g['lr'] = 0.000001
 
 def train(train_data, train_labels, test_data, test_labels, config,num):
+    #从config中获取训练参数
     Nep    = config['Nep']
     units  = config['units']
     device = config['device']
@@ -39,12 +41,14 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     model  = PINN(units,config['model_mode'],train_data,train_labels,config['layers'])
     model.to(device)
     set_seed(config['seed'])
-    #model.load_state_dict(torch.load('best_model.pt'))
+    #初始化两个优化器
     optimizer1 = optim.AdamW(model.parameters(), lr)
     optimizer2=optim.LBFGS(model.parameters(),lr)
+    #初始化一个学习率调度器，根据loss是否下降来调整学习率
     scheduler=optim.lr_scheduler.ReduceLROnPlateau(optimizer1,patience=100)
+    #初始化一个损失函数计算类
     criterion = PINN_Loss(Npde, L, device, addBC,Lambda)
-    
+    #初始化磁场损失，散度损失，旋度损失，边界散度损失，边界旋度损失，总损失，测试集损失
     loss_f_l = []
     loss_u_l = []
     loss_cross_l = []
@@ -53,7 +57,7 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     loss_l = []
     test_loss_l = []
     epoch = []
-
+    #准备根据最小loss记录最佳模型，并将数据和模型移动到指定设备上
     mini_loss = 100000000
     best_model = model
     best_ep = 0
@@ -62,9 +66,12 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
     test_data=test_data.to(device)
     test_labels=test_labels.to(device)     
     st = time.time()
+    #早停法参数，当一段时间内没有获得测试集上更好的模型时，提前停止训练
     exitflag=0
     patience=30
+    #若batch_on为True，则每次训练时随机选择一个batch进行训练，否则使用全部数据
     batch_on=False
+    #该函数用于LBFGS优化器的闭包函数，计算损失并返回
     def closure():
         optimizer2.zero_grad()
         pred = model(train_data_batch)
@@ -72,8 +79,10 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
         loss.backward(retain_graph=True)
         return loss
     for ep in range(Nep):
+        #把模型设成train模式，允许梯度计算
         model.train()
         batch_size=128
+        #抽取数据
         if(batch_on):
             r=torch.randint(train_data.shape[0],(batch_size,))
             train_data_batch=train_data[r,:]
@@ -82,20 +91,24 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
             train_data_batch=train_data
             train_labels_batch=train_labels
         if(ep<Nep*0.95 and exitflag<patience):
+            #训练策略：若ep小于总训练轮数的95%且没有达到早停条件，则使用AdamW优化器进行训练，否则使用LBFGS优化器进行训练，一般会在3k步左右达到早停条件
             optimizer1.zero_grad()            
             pred = model(train_data_batch)      
             loss_f, loss_u, loss_cross, loss_BC_div, loss_BC_cul, loss = criterion(train_data_batch, pred, train_labels_batch, model)
             loss.backward()
+            #梯度裁剪，防止梯度爆炸，训练大型模型时有用
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer1.step()
-            
+            #如果使用了学习率调整器，则根据当前损失调整学习率，lr_adjust暂时不使用
             if(adjust):
                 scheduler.step(loss)
         else:
+            #使用LBFGS优化器进行训练，实测LBFGS能够提供在训练末端更稳定的收敛性，但无法收敛到更小值
             optimizer2.step(closure=closure)
             pred = model(train_data_batch)
             loss_f, loss_u, loss_cross, loss_BC_div, loss_BC_cul, loss = criterion(train_data_batch, pred, train_labels_batch, model)
         if(ep%100==0):
+            #每100步打印一次损失，并记录损失
             epoch.append(ep)
             loss_f_l.append(loss_f.item())
             loss_u_l.append(loss_u.item())
@@ -103,11 +116,12 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
             loss_BC_div_l.append(loss_BC_div.item())
             loss_BC_cul_l.append(loss_BC_cul.item())
             loss_l.append(loss.item())
+            #等待cuda同步，确保GPU计算完成，准备在测试集上评估，并把模型设成eval模式
             torch.cuda.synchronize()     
             model.eval()
            
             test_pred = model(test_data)
-
+            #计算测试集上的损失
             test_loss = torch.mean(torch.square(test_pred-test_labels))
 
             test_loss_l.append(test_loss.item())
@@ -115,23 +129,27 @@ def train(train_data, train_labels, test_data, test_labels, config,num):
                 #if(adjust):
                     #lr_adjust(test_loss, optimizer1)            
             if(mini_loss>test_loss and exitflag<patience):
+                #如果当前测试集损失小于之前的最小损失，则保存模型，并更新最小损失和最佳模型，并归零早停计数器
                 torch.save(model.state_dict(), f'{path}/best_model{num}.pt')
                 mini_loss = test_loss
                 best_model = model
                 best_ep = ep
                 exitflag=0
             elif(ep>Nep*0.5):
+                #如果当前测试集损失大于之前的最小损失，则增加早停计数器
                 exitflag=exitflag+1
 
             if(test_loss<0.0000001 or exitflag>patience+5):
+                #如果测试集损失小于0.0000001或者早停计数器超过patience+5，则提前停止训练，这样即可为LBFGS留下5步的训练时间
                 print('early stop!!!')
                 break
+            #打印当前训练轮数，训练时间，剩余时间，训练集损失，测试集损失，最大误差
             print(f'===>>> ep: {ep}')
             print(f'time used: {time.time()-st:.2f}s, time left: {(time.time()-st)/(ep+1)*Nep-(time.time()-st):.2f}s')
             print(f'loss_B: {loss_u:.7f}, loss_div: {loss_f:.7f}, loss_cul: {loss_cross:.7f}, loss_BC_div: {loss_BC_div:.7f}, loss_BC_cul: {loss_BC_cul:.7f}')
             print(f'total loss: {loss:.7f}, test loss: {test_loss:.7f}')
-            #print(torch.abs(test_pred-test_labels/test_labels))
             print(f'max:{torch.max(torch.abs(test_pred-test_labels))}')
+    #训练结束后，打印最佳模型的训练轮数和最小损失，并绘制损失曲线
     print(f'best loss at ep: {best_ep}, best_loss: {mini_loss:.7f}')
     print(f'total time used: {time.time()-st:.2f}s')
     plt.plot(epoch, loss_f_l, label='loss div')

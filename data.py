@@ -2,9 +2,10 @@ import numpy as np
 import torch
 import os
 import scipy.special as sc
-
+#这个类用于生成模拟磁场数据，在使用实验数据的时候这个程序不会被调用
 class data_generation:
     def __init__(self, radius=1, N_sample=3, N_test=1000, L=0.5,dx=2,dy=2,dz=2,a=2,b=2,Ix=0.5,Iy=0.5,Iz=10,radius1=1,radius2=1):
+        # 转移参数
         self.radius = radius
         self.N_sample = N_sample
         self.N_test = N_test
@@ -21,6 +22,7 @@ class data_generation:
         self.radius2=radius2
 
     def circB(self,x,y,z):
+        #这个函数计算一个圆形线圈在(x,y,z)处的磁场
          # 定义一些参数，用于公式中
         x_prime=x
         y_prime=y
@@ -43,6 +45,7 @@ class data_generation:
         #return np.concatenate([Bx.reshape(-1,1),By.reshape(-1,1),Bz.reshape(-1,1)], axis=1)*-100
         return np.array([Bx_prime,By_prime,Bz_prime])*-100
     def lineB(self,pos,start,end):
+        #计算一段线段在pos处的磁场，电流从start指向end
         start=np.expand_dims(start,0)
         end=np.expand_dims(end,0)
         r12=end-start
@@ -53,11 +56,11 @@ class data_generation:
         r=np.linalg.norm(np.cross(r10,r20),axis=1)/np.linalg.norm(r12)
         
         B=np.cross(r10,r20)
-        #print(np.expand_dims(np.linalg.norm(B,axis=1),1).shape,np.expand_dims(r,1).shape,cos1.shape,cos2.shape)
         
         B=B/np.expand_dims(np.linalg.norm(B,axis=1),1)/np.expand_dims(r,1)*(cos1-cos2)/4/np.pi
         return B
     def recB_xy(self,x,y,z):
+        #计算一个xy平面上的矩形线圈在(x,y,z)处的磁场
         #x轴长为a，y轴长为b
         pos1=np.array([self.a/2,self.b/2,0])
         pos2=np.array([-self.a/2,self.b/2,0])
@@ -67,7 +70,7 @@ class data_generation:
         B=self.lineB(pos,pos1,pos2)+self.lineB(pos,pos2,pos3)+self.lineB(pos,pos3,pos4)+self.lineB(pos,pos4,pos1)
         return B
     def circB_xy(self,x,y,z):
-        #Defining some parameters to be used in the formulas
+        #计算一个xy平面上的圆形线圈在(x,y,z)处的磁场
          # 定义一些参数，用于公式中
         x_prime=x
         y_prime=y
@@ -91,7 +94,7 @@ class data_generation:
         return np.array([Bx_prime,By_prime,Bz_prime])
 
     def circB_yz(self, x, y, z):
-    
+        # 计算一个yz平面上的圆形线圈在(x,y,z)处的磁场
         # 坐标转换，将线圈旋转到yz平面
         x_prime = z  # x' = z
         y_prime = y  # y' = y
@@ -123,7 +126,7 @@ class data_generation:
         return np.array([Bx_rotated, By_rotated, Bz_rotated]) 
 
     def circB_zx(self, x, y, z):
-
+        # 计算一个zx平面上的圆形线圈在(x,y,z)处的磁场
         # 坐标转换，将线圈旋转到yz平面
         x_prime = x  # x' = x
         y_prime = -z  # y' = -z
@@ -154,6 +157,7 @@ class data_generation:
         # 返回旋转后的磁场分量
         return np.array([Bx_rotated, By_rotated, Bz_rotated]) 
     def circB_rotate(self,x,y,z,theta,phi,radius):
+        # 计算一个圆形线圈在(x,y,z)处的磁场，绕y轴旋转theta角度，绕z轴旋转phi角度
         #theta是绕y轴正向旋转的角度，phi是绕z轴正向旋转的角度
         x_prime=x*np.cos(theta)*np.cos(phi)+y*np.cos(theta)*np.sin(phi)-z*np.sin(theta)
         y_prime=-x*np.sin(phi)+y*np.cos(phi)
@@ -180,16 +184,19 @@ class data_generation:
         Bz=-Bx_prime*np.sin(theta)+Bz_prime*np.cos(theta)
         return np.concatenate((Bx,By,Bz),axis=1)/np.pi
     def B(self,x,y,z):
+        #计算论文中的八线圈组的磁场
         field = 1*self.circB(x + 1.01,y + 1.0,z - 4.0) + 1*self.circB(x - 1.01,y - 1.0, z - 4.0) + 1*self.circB(x + 1.01,y - 1.0,z - 4.0) + 1*self.circB(x - 1.01,y + 1.0,z - 4.0) + 1*self.circB(x + 1.01,y + 1.0,z + 4.0) + 1*self.circB(x - 1.01,y - 1.0,z + 4.0) + 1*self.circB(x + 1.01,y - 1.0,z + 4.0) + 1*self.circB(x - 1.01,y + 1.0,z + 4.0)
         return field.tolist()
 
     def HelmholtzB(self, x, y, z):
+        # 计算Helmholtz线圈组的磁场
         field  = 0
         field += (self.circB_xy(x, y, z-self.dz/2) + self.circB_xy(x, y, z+self.dz/2))*self.Iz
         field += (self.circB_yz(x-self.dx/2, y, z) + self.circB_yz(x+self.dx/2, y, z))*self.Ix
         field += (self.circB_zx(x, y+self.dy/2, z) + self.circB_zx(x, y-self.dy/2, z))*self.Iy
         return field.tolist()
     def reccircB(self,x,y,z):
+        #计算一个矩形线圈和圆形线圈组合的磁场
         field =0
         field += self.circB_rotate(x+self.dx/2,y,z,np.pi/2,0,self.radius1)*self.Ix
         field += self.circB_rotate(x-self.dx/2,y,z,np.pi/2,0,self.radius1)*self.Ix
@@ -199,6 +206,7 @@ class data_generation:
         field += self.recB_xy(x,y,z+self.dz/2)*self.Iz
         return field.tolist()
     def number_generator(self,min,max,num,mode):
+        #这个函数用于决定训练点的采样方式。训练点在正方体的表面采样，有正态分布（中间密两边稀），等间隔，均匀三种分布，但对结果影响不大
         if (mode == 'normal'):
             a=np.random.normal(0,1,num)
             a=(a-a.min())/(a.max()-a.min())*(max-min)+min
@@ -209,6 +217,8 @@ class data_generation:
         else:
             return np.random.default_rng().uniform(min,max,num).reshape((num,1))
     def train_data_cube(self, Btype='normal', inner_sample=False,mode='uniform'):
+        # 生成训练数据，正方体采样
+        #N_sample是每个面采样的点数，总点数是6*N_sample
         L1 = self.L
         N = self.N_sample
         x1 = np.concatenate((-L1*np.ones([N, 1]), L1*np.ones([N, 1]), #L和-L上各取Nu个点，确保采样点在格子的表面
@@ -225,6 +235,7 @@ class data_generation:
         y1 = torch.tensor(y1, dtype=torch.float32)
         z1 = torch.tensor(z1, dtype=torch.float32)
         pos1 = torch.cat((x1, y1, z1), axis=1)
+        #如果允许采样稍微偏离表面的话，可以大幅提高精度
         if(inner_sample):
             L2 = self.L*0.75
             x2 = np.concatenate((-L2*np.ones([N, 1]), L2*np.ones([N, 1]), 
@@ -260,6 +271,7 @@ class data_generation:
         return  pos, labels
     
     def train_data_slice(self, Btype='normal'):
+        #这个函数在x=0平面上采样
         L = self.L
         N = self.N_sample
         x = np.array([0,0,0,0,0,0]).reshape(-1,1)
@@ -283,6 +295,7 @@ class data_generation:
         return  pos, labels
 
     def test_data_cube(self, Btype='normal'):
+        # 生成测试数据，正方体采样
         L = self.L
         N = self.N_test
         x = np.random.default_rng().uniform(low = -L, high = L, size = ((N, 1))) #shape： 1000*1
@@ -305,6 +318,7 @@ class data_generation:
         return pos, labels
 
     def test_data_slice(self, Btype='normal'):
+        #这个函数在x=0平面上采样
         L = self.L
         N = int(self.N_test/10)
         x = np.random.default_rng().uniform(low = -L/10, high = L/10, size = ((N, 1)))
@@ -326,6 +340,7 @@ class data_generation:
             torch.save(labels, f'./data/test_B_slice.pt')
         return pos, labels
 def sampling(train_data,train_labels,models,idx):
+    #这个函数根据前一个模型的表现强化薄弱数据在下一个模型训练集中出现的频率。按照偏差的平方对数据加权进行下一批数据的采样。但效果不显。
     if(idx>0):
         model=models.models[idx-1].to('cpu')
         prob=torch.sum((model(train_data)-train_labels[:,:,0])**2,dim=1)

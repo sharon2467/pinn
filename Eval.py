@@ -2,7 +2,11 @@ import torch
 from data import *
 from model import *
 import matplotlib.pyplot as plt
+#这个程序进行评估工作
 def getdB(Bpred, Breal):
+    # 计算预测的磁场和真实磁场之间的相对误差
+    # Bpred是模型预测的磁场，Breal是真实的磁场
+    # 可以看到曾经有许多过滤条件，会滤掉因为本身磁场小而导致的大相对误差，但现在没有了
     Bx = Bpred[:,0]
     By = Bpred[:,1]
     Bz = Bpred[:,2]
@@ -30,6 +34,7 @@ def getdB(Bpred, Breal):
     # dB = dB[dB != 0]
     return dBx, dBy, dBz, dB
 def drawdB(Bpred,Breal,path,name='hist_result'):
+    # 画出预测的磁场和真实磁场之间的误差分布，这个函数负责了每次组会上展示的条形图的绘制
     dBx, dBy, dBz, dB = getdB(Bpred, Breal)
     fig_stat = plt.figure(figsize=([16,16]))
     fig_stat.add_subplot(2,2,1)
@@ -52,13 +57,17 @@ def drawdB(Bpred,Breal,path,name='hist_result'):
     plt.show()
     plt.close()
 def Eval(model, config, field,mode):
+    # 这个函数是评估函数，负责调用模型进行预测，并绘制结果
+    # model是模型对象，config是配置字典，field是数据对象，可为磁场生成器或者(test_data,test_labels)，mode是评估模式
     if(mode=='train' or mode=='simulation'):
+        #这部分负责模拟磁场的评估
         path  = config['path']
         mode  = config['geo']
         Btype = config['Btype']
-        L = config['length']/2*0.25
+        L = config['length']/2
         N_val =10
         y_test_np_grid = np.linspace(-L, L, N_val)
+        # 生成测试网格
         if(mode=='cube'):
             x_test_np_grid = np.linspace(-L, L, N_val)
         if(mode=='slice'):
@@ -72,11 +81,14 @@ def Eval(model, config, field,mode):
         y_test = torch.tensor(y_test_np, dtype=torch.float32)
         z_test = torch.tensor(z_test_np, dtype=torch.float32)
         eval_data = torch.cat([x_test, y_test, z_test], axis = 1)
+        #生成磁场数据
         if(Btype=='Helmholtz'):
             simulation = np.array([field.HelmholtzB(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
         elif(Btype=='normal'):
+            #这个是论文里的上下共八线圈配置
             simulation = np.array([field.B(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
         elif(Btype=='reccirc'):
+            #reccirc支持矢量化生成，不需要循环
             simulation = np.array([field.reccircB(x_test_np,y_test_np,z_test_np)])
         model_output=model.eval(eval_data,'mean')
            
@@ -229,6 +241,7 @@ def Eval(model, config, field,mode):
             plt.show()
             plt.close()
     if(mode=='import' or mode=='experimental'):
+        #这部分负责实验磁场的评估
         path  = config['path']
         data = field[0]
         experiment = field[1].detach().numpy()
@@ -236,10 +249,12 @@ def Eval(model, config, field,mode):
         if np.any(experiment == 0):
             print("Warning: experiment contains zero values.")
         drawdB(model_output,experiment,path)
+        #这里实际上就是将误差取了绝对值再画一张图，方便与后面的坐标误差和磁场误差比对，因为它们只有绝对值
         drawdB(np.abs(model_output-experiment)+np.abs(experiment),np.abs(experiment),path,name='hist_result_abs')
         model_output_error=model.eval([data,data*0.01],'error').detach().numpy() 
         model_output_error_MonteCarlo=model.eval([data,data*0.01],'error_MonteCarlo').detach().numpy()
         model_output_error_field=model.eval([data,model.train_labels*0.01],'error_field').detach().numpy()
+        #这里利用了将实验值加上误差的方式来重复使用dB函数
         drawdB(model_output_error+np.abs(experiment),np.abs(experiment),path,name='error_result')
         drawdB(model_output_error_MonteCarlo+np.abs(experiment),np.abs(experiment),path,name='error_result_MonteCarlo')
         drawdB(model_output_error_field+np.abs(experiment),np.abs(experiment),path,name='error_result_field')

@@ -1,3 +1,4 @@
+#这个程序是早期的eval，用于调试模拟磁场，不带模型训练功能
 import numpy as np  
 import matplotlib.pyplot as plt  
 from mpl_toolkits.mplot3d import Axes3D  

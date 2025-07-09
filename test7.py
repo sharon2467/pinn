@@ -1,3 +1,4 @@
+#这个程序用于转换学长传来的磁场数据
 import numpy as np
 name='0'
 train_set=np.load('磁场/中心磁场'+name+'/train_set.npy')

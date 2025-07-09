@@ -1,3 +1,4 @@
+#这个程序用于可视化实验数据，并计算磁场的散度和旋度
 import numpy as np
 import matplotlib.pyplot as plt
 a=np.load('experiment400.npy')

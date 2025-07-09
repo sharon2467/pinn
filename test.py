@@ -1,3 +1,4 @@
+#这个程序用于验证模拟磁场的无散无旋性，效果很好，散度和旋度随着网格的加密迅速减小。
 import numpy as np  
 import matplotlib.pyplot as plt  
 from mpl_toolkits.mplot3d import Axes3D  

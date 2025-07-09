@@ -1,3 +1,4 @@
+#这个程序同步来自于机械臂的带时间戳的坐标和磁场数据，机械臂现已弃用
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt

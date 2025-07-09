@@ -1,3 +1,4 @@
+#这个程序使用reccirc模型来预测真实磁场数据。其优化三个电流参数来尽可能靠近真实磁场。不过效果不好，或许可以进一步。
 import numpy as np  
 import matplotlib.pyplot as plt  
 from mpl_toolkits.mplot3d import Axes3D  
