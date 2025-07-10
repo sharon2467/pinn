@@ -90,7 +90,7 @@ subparser_train.add_argument('--Ntest', type=int, default=1000, metavar='--',
                     help='number of test points, only used in simulation mode,default is 1000')
 subparser_train.add_argument('--geo', type=str, default='cube', metavar='--', choices=['cube', 'slice'],
                     help='geo of the coils, cube means fields are measured in a cube, slice means fields are measured in a slice')
-# 接下来的所有参数都只用于模拟模式，用于控制模拟数据生成器采用的线圈模型的几何参数。
+# 接下来的所有参数是用于控制模拟数据生成器采用的线圈模型的几何参数。
 subparser_train.add_argument('--radius', type=float, default=1, metavar='--',
                     help='radius of the coils,only use in simulation mode,default is 1')
 subparser_train.add_argument('--inner_sample', type=int, default=0, metavar='--', choices=[1,0],help='whether sample the inner part of the cube or not')
@@ -101,9 +101,9 @@ subparser_train_reccirc.add_argument('--radius1', type=float, default=9999, meta
 subparser_train_reccirc.add_argument('--radius2', type=float, default=9999, metavar='--',help='the radius of the second helmholtz coil')
 subparser_train_reccirc.add_argument('--a', type=float, default=9999, metavar='--',help='x length of the rectangle')
 subparser_train_reccirc.add_argument('--b', type=float, default=9999, metavar='--',help='y length of the rectangle')
-subparser_train_reccirc.add_argument('--Iz', type=float, default=9999, metavar='--',help='z Intensity only used in reccirc')
-subparser_train_reccirc.add_argument('--Ix', type=float, default=9999, metavar='--',help='x Intensity only used in reccirc')
-subparser_train_reccirc.add_argument('--Iy', type=float, default=9999, metavar='--',help='y Intensity only used in reccirc')
+subparser_train_reccirc.add_argument('--Iz', type=float, default=1, metavar='--',help='z Intensity only used in reccirc')
+subparser_train_reccirc.add_argument('--Ix', type=float, default=1, metavar='--',help='x Intensity only used in reccirc')
+subparser_train_reccirc.add_argument('--Iy', type=float, default=1, metavar='--',help='y Intensity only used in reccirc')
 
 args = parser.parse_args()
 torch.autograd.set_detect_anomaly(True)
@@ -144,34 +144,46 @@ if(args.mode=='import'):
     Eval(models,config,(test_data,test_labels),args.mode)
 if(args.mode=='train'):
     # 若未设定模拟模式中三个方向上的距离，则自动设为两倍半径的距离。
-    if((args.dx==9999) and (args.dy==9999) and (args.dz==9999)):
-        args.dx = args.radius*2
-        args.dy = args.radius*2
-        args.dz = args.radius*2
-    if(args.Btype=='reccirc'):
-        if((args.radius1==9999) and (args.radius2==9999)):
-            args.radius1 = args.radius
-            args.radius2 = args.radius
+    if((config['dx']==9999) and (config['dy']==9999) and (config['dz']==9999)):
+        config['dx'] = config['radius']*2
+        config['dy'] = config['radius']*2
+        config['dz'] = config['radius']*2
+    if(config['Btype']=='reccirc'):
+        if((config['radius1']==9999) and (config['radius2']==9999)):
+            config['radius1'] = config['radius']
+            config['radius2'] = config['radius']
+            config['a'] = config['radius']*2
+            config['b'] = config['radius']*2
     #这是利用模拟数据进行训练并评估的模式
     config['logdir']    = args.logdir + '/' + args.experiment
     path = mkdir(config['logdir'])
     config['path'] = path
     #数据生成器同样是个实例
-    field = data_generation(radius=config['radius'],
-                            N_sample=config['Nsamples'], 
-                            N_test=config['Ntest'], 
-                            L=config['length']/2,
-                            dx=config['dx'],
-                            dy=config['dy'],
-                            dz=config['dz'],
-                            radius1=config['radius1'],
-                            radius2=config['radius2'],
-                            a=config['a'],
-                            b=config['b'],
-                            Iz=config['Iz'],
-                            Ix=config['Ix'],
-                            Iy=config['Iy']
-                        )
+    if(config['Btype']=='Helmholtz' or config['Btype']=='normal'):
+        field = data_generation(radius=config['radius'],
+                                N_sample=config['Nsamples'], 
+                                N_test=config['Ntest'], 
+                                L=config['length']/2,
+                                dx=config['dx'],
+                                dy=config['dy'],
+                                dz=config['dz'],
+                            )
+    if(config['Btype']=='reccirc'):
+        field = data_generation(radius=config['radius'],
+                                N_sample=config['Nsamples'], 
+                                N_test=config['Ntest'], 
+                                L=config['length']/2,
+                                dx=config['dx'],
+                                dy=config['dy'],
+                                dz=config['dz'],
+                                radius1=config['radius1'],
+                                radius2=config['radius2'],
+                                a=config['a'],
+                                b=config['b'],
+                                Iz=config['Iz'],
+                                Ix=config['Ix'],
+                                Iy=config['Iy']
+                            )
     #生成数据
     if(config['geo']=='cube'):
         train_data, train_labels = field.train_data_cube(config['Btype'],config['inner_sample'],config['train_sampling'])
@@ -185,8 +197,8 @@ if(args.mode=='train'):
     print(f"Training data shape: {train_data.shape}, Training labels shape: {train_labels.shape}")  
     with open(f"{path}/config.json", 'w') as config_file:
         config_file.write( json.dumps(config, indent=4) )
-    np.save(f"{path}/train_data.npy", train_data)
-    np.save(f"{path}/train_labels.npy", train_labels)
+    np.save(f"{path}/train_data.npy", train_data.detach().numpy())
+    np.save(f"{path}/train_labels.npy", train_labels.detach().numpy())
     models=MODELS(config,train_data,train_labels)
     # 如果开启random_sample，则每个模型将会从训练数据中按照前一个模型的表现随机采样一部分数据进行训练。
     for i in range(N_models):

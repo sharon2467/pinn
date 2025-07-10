@@ -3,6 +3,9 @@
     "version": "0.2.0",
     "configurations": [
 
+
+
+
         {
             "name": "Python Debugger: Current File with Arguments",
             "type": "debugpy",
@@ -10,14 +13,9 @@
             "program": "main.py",
             "console": "integratedTerminal",
             "args": [
-        "--experiment=B400",
-        "--data_standard=1",
-        "--standard=1",        
-        "--model_mode=B",
-        "--layers=2",
-        "--units=1000",
-        "import",
-        "--eval_path=experiment400"
+        "--Nep=300",
+        "train",
+        "reccirc"
 
  
       ],

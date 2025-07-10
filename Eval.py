@@ -84,6 +84,7 @@ def Eval(model, config, field,mode):
         #生成磁场数据
         if(Btype=='Helmholtz'):
             simulation = np.array([field.HelmholtzB(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
+            print(simulation)
         elif(Btype=='normal'):
             #这个是论文里的上下共八线圈配置
             simulation = np.array([field.B(x_test_np[i], y_test_np[i], z_test_np[i]) for i in range(N_val**3)])
@@ -93,8 +94,8 @@ def Eval(model, config, field,mode):
         model_output=model.eval(eval_data,'mean')
            
         simulation = simulation.reshape(N_val**3, 3)
-        drawdB(model_output,simulation,path)
-
+        drawdB(model_output.detach().numpy(),simulation,path)
+        
 
         model_output = model_output.reshape(N_val, N_val, N_val, 3)
         simulation = simulation.reshape(N_val, N_val, N_val, 3)
@@ -250,7 +251,9 @@ def Eval(model, config, field,mode):
             print("Warning: experiment contains zero values.")
         drawdB(model_output,experiment,path)
         #这里实际上就是将误差取了绝对值再画一张图，方便与后面的坐标误差和磁场误差比对，因为它们只有绝对值
+        
         drawdB(np.abs(model_output-experiment)+np.abs(experiment),np.abs(experiment),path,name='hist_result_abs')
+        #如果需要修改坐标误差和磁场误差的数值，在此处更改
         model_output_error=model.eval([data,data*0.01],'error').detach().numpy() 
         model_output_error_MonteCarlo=model.eval([data,data*0.01],'error_MonteCarlo').detach().numpy()
         model_output_error_field=model.eval([data,model.train_labels*0.01],'error_field').detach().numpy()

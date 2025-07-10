@@ -1,0 +1,52 @@
+{
+    "mode": "train",
+    "seed": 42,
+    "model_mode": "B",
+    "logdir": "./log//training",
+    "layers": 4,
+    "experiment": "training",
+    "device": "cpu",
+    "lr": 0.001,
+    "adjust_lr": 0,
+    "units": 32,
+    "Nep": 1,
+    "Npde": 256,
+    "addBC": 0,
+    "standard": 1,
+    "Lambda": 1,
+    "N_models": 2,
+    "data_standard": 1,
+    "Btype": "Helmholtz",
+    "train_sampling": "uniform",
+    "random_sample": 1,
+    "length": 1,
+    "Nsamples": 16,
+    "Ntest": 1000,
+    "geo": "cube",
+    "radius": 1,
+    "inner_sample": 0,
+    "dx": 2,
+    "dy": 2,
+    "dz": 2,
+    "path": "./log//training\\2025_7_10_18_48_7",
+    "mean": [
+        0.5701441168785095,
+        -0.5813174247741699,
+        11.218401908874512
+    ],
+    "std": [
+        1.6604900360107422,
+        1.5926964282989502,
+        1.8958364725112915
+    ],
+    "mean_data": [
+        0.05008706450462341,
+        -0.006026903633028269,
+        -0.01116124913096428
+    ],
+    "std_data": [
+        0.3682858347892761,
+        0.3674778938293457,
+        0.3707050085067749
+    ]
+}

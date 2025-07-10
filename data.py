@@ -189,14 +189,14 @@ class data_generation:
         return field.tolist()
 
     def HelmholtzB(self, x, y, z):
-        # 计算Helmholtz线圈组的磁场
+        # 计算三正交Helmholtz线圈组的磁场
         field  = 0
         field += (self.circB_xy(x, y, z-self.dz/2) + self.circB_xy(x, y, z+self.dz/2))*self.Iz
         field += (self.circB_yz(x-self.dx/2, y, z) + self.circB_yz(x+self.dx/2, y, z))*self.Ix
         field += (self.circB_zx(x, y+self.dy/2, z) + self.circB_zx(x, y-self.dy/2, z))*self.Iy
         return field.tolist()
     def reccircB(self,x,y,z):
-        #计算一个矩形线圈和圆形线圈组合的磁场
+        #计算一对矩形线圈和两对圆形线圈组合的磁场
         field =0
         field += self.circB_rotate(x+self.dx/2,y,z,np.pi/2,0,self.radius1)*self.Ix
         field += self.circB_rotate(x-self.dx/2,y,z,np.pi/2,0,self.radius1)*self.Ix
@@ -263,11 +263,12 @@ class data_generation:
             z = z1
             pos = pos1          
         if(Btype=='Helmholtz'):
-            labels = torch.tensor([self.HelmholtzB(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
+            labels = torch.tensor([self.HelmholtzB(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True) 
         elif(Btype=='normal'):
             labels = torch.tensor([self.B(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
         elif(Btype=='reccirc'):
             labels = torch.tensor(self.reccircB(x, y, z), requires_grad=True)
+        labels = labels.reshape(-1,3)
         return  pos, labels
     
     def train_data_slice(self, Btype='normal'):
@@ -288,6 +289,7 @@ class data_generation:
         elif(Btype=='reccirc'):
 
             labels = torch.tensor([self.reccircB(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
+        labels = labels.reshape(-1,3)
         if(os.path.exists('./data/xyz_slice.pt')==False):
             torch.save(pos, f'./data/xyz_slice.pt')
         if(os.path.exists('./data/B_slice.pt')==False):
@@ -307,10 +309,13 @@ class data_generation:
         pos = torch.cat((x, y, z), axis = 1)
         if(Btype=='Helmholtz'):
             labels = torch.tensor([self.HelmholtzB(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
+            
         elif(Btype=='normal'):
             labels = torch.tensor([self.B(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
+
         elif(Btype=='reccirc'):
             labels = torch.tensor(self.reccircB(x, y, z), requires_grad=True)
+        labels = labels.reshape(-1,3)
         if(os.path.exists('./data/test_xyz.pt')==False):
             torch.save(pos, f'./data/test_xyz.pt')
         if(os.path.exists('./data/test_B.pt')==False):
@@ -334,6 +339,7 @@ class data_generation:
             labels = torch.tensor([self.B(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
         elif(Btype=='reccirc'):
             labels = torch.tensor([self.reccircB(x[i], y[i], z[i]) for i in range(len(x))], requires_grad=True)
+        labels = labels.reshape(-1,3)
         if(os.path.exists('./data/test_xyz_slice.pt')==False):
             torch.save(pos, f'./data/test_xyz_slice.pt')
         if(os.path.exists('./data/test_B_slice.pt')==False):
@@ -343,7 +349,7 @@ def sampling(train_data,train_labels,models,idx):
     #这个函数根据前一个模型的表现强化薄弱数据在下一个模型训练集中出现的频率。按照偏差的平方对数据加权进行下一批数据的采样。但效果不显。
     if(idx>0):
         model=models.models[idx-1].to('cpu')
-        prob=torch.sum((model(train_data)-train_labels[:,:,0])**2,dim=1)
+        prob=torch.sum((model(train_data)-train_labels)**2,dim=1)
         prob=prob.detach().numpy()
         prob=prob/np.sum(prob)
         random_index=np.random.choice(train_data.shape[0],train_data.shape[0],p=prob)
